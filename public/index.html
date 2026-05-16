@@ -1,38 +1,69 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Estoque - Sr. Chalino</title>
-    <link href="https://jsdelivr.net" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
     <style>
-        body { background-color: #f8f9fa; }
-        .container { margin-top: 50px; max-width: 800px; }
-        .estoque-baixo { color: red; font-weight: bold; }
+        body {
+            background-color: #e9e9e9;
+        }
+
+        .container {
+            margin-top: 50px;
+            max-width: 800px;
+        }
+
+        .estoque-ok {
+            color: rgb(57, 136, 61);
+            font-weight: bold;
+        }
+
+        .estoque-baixo {
+            color: rgb(218, 62, 62);
+            font-weight: bold;
+        }
     </style>
 </head>
+
 <body>
     <div class="container bg-white p-4 shadow rounded">
-        <h2 class="text-center mb-4">Gestão de Estoque - PoC</h2>
-        
-        <!-- Formulário de Cadastro -->
+        <h2 class="text-center mb-4">Gestão de Estoque</h2>
+
+        <!-- Formulário -->
         <form id="formProduto" class="row g-3 mb-5">
             <div class="col-md-6">
                 <input type="text" id="nome" class="form-control" placeholder="Nome do Produto" required>
             </div>
             <div class="col-md-3">
-                <input type="number" id="quantidade" class="form-control" placeholder="Qtd" required>
+                <input type="number" id="quantidade" class="form-control" placeholder="Qtd" required min="0">
             </div>
             <div class="col-md-3">
-                <input type="number" step="0.01" id="preco" class="form-control" placeholder="Preço R$" required>
+                <input type="number" step="0.01" id="preco" class="form-control" placeholder="Preço R$" required
+                    min="0">
             </div>
             <div class="col-12">
                 <button type="submit" class="btn btn-primary w-100">Cadastrar Produto</button>
             </div>
         </form>
 
-        <!-- Tabela de Produtos -->
-        <h4>Inventário Atual</h4>
+        <!-- Filtro -->
+        <div class="row mb-3">
+            <div class="col-md-8">
+                <input type="text" id="buscar" class="form-control" placeholder="Buscar produto pelo nome...">
+            </div>
+            <div class="col-md-4">
+                <select id="filtro" class="form-select">
+                    <option value="todos">Todos</option>
+                    <option value="baixo">Estoque Baixo</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Tabela -->
+        <h4>Itens no Estoque</h4>
         <table class="table table-hover">
             <thead>
                 <tr>
@@ -40,6 +71,7 @@
                     <th>Qtd</th>
                     <th>Preço</th>
                     <th>Status</th>
+                    <th>Ações</th>
                 </tr>
             </thead>
             <tbody id="tabelaCorpo"></tbody>
@@ -48,28 +80,41 @@
 
     <script>
         const form = document.getElementById('formProduto');
-        
-        // Função para carregar produtos
+
         async function carregarProdutos() {
             const res = await fetch('/produtos');
             const produtos = await res.json();
             const corpo = document.getElementById('tabelaCorpo');
+            const busca = document.getElementById('buscar').value.toLowerCase();
+            const filtro = document.getElementById('filtro').value;
+
             corpo.innerHTML = '';
-            
-            produtos.forEach(p => {
-                const status = p.quantidade < 5 ? '<span class="estoque-baixo">Repor!</span>' : 'OK';
-                corpo.innerHTML += `
-                    <tr>
-                        <td>${p.nome}</td>
-                        <td>${p.quantidade}</td>
-                        <td>R$ ${p.preco.toFixed(2)}</td>
-                        <td>${status}</td>
-                    </tr>
-                `;
-            });
+
+            produtos
+                .filter(p => p.nome.toLowerCase().includes(busca))
+                .filter(p => filtro === 'baixo' ? p.quantidade < 5 : true)
+                .forEach(p => {
+
+                    const status = p.quantidade < 5
+                        ? '<span class="estoque-baixo">Repor!</span>'
+                        : '<span class="estoque-ok">OK!</span>';
+
+                    corpo.innerHTML += `
+                        <tr>
+                            <td>${p.nome}</td>
+                            <td>${p.quantidade}</td>
+                            <td>R$ ${parseFloat(p.preco).toFixed(2)}</td>
+                            <td>${status}</td>
+                            <td>
+                                <button class="btn btn-success btn-sm" title="Adicionar quantidade de itens" onclick="darEntrada('${p.id}')">↑</button>
+                                <button class="btn btn-warning btn-sm" title="Remover quantidade de itens" onclick="darBaixa('${p.id}')">↓</button>
+                                <button class="btn btn-outline-danger btn-sm" title="Excluir item da lista" onclick="removerProduto('${p.id}')">X</button>
+                            </td>
+                        </tr>
+                    `;
+                });
         }
 
-        // Função para cadastrar
         form.onsubmit = async (e) => {
             e.preventDefault();
             const dados = {
@@ -88,7 +133,57 @@
             carregarProdutos();
         };
 
+        //Excluir produto
+        async function removerProduto(id) {
+            if (confirm('Tem certeza que deseja excluir este produto?')) {
+                await fetch(`/produtos/${id}`, {
+                    method: 'DELETE'
+                });
+                carregarProdutos();
+            }
+        }
+
+        //Dar baixa na quantidade
+        async function darBaixa(id) {
+            const quantidade = prompt('Quantas unidades deseja remover?');
+
+            if (!quantidade || quantidade <= 0) {
+                alert('Digite uma quantidade válida.');
+                return;
+            }
+
+            await fetch(`/produtos/baixa/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ quantidade: Number(quantidade) })
+            });
+
+            carregarProdutos();
+        }
+
+        // Dar entrada na quantidade
+        async function darEntrada(id) {
+            const quantidade = prompt('Quantas unidades deseja adicionar?');
+
+            if (!quantidade || quantidade <= 0) {
+                alert('Digite uma quantidade válida.');
+                return;
+            }
+
+            await fetch(`/produtos/entrada/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ quantidade: Number(quantidade) })
+            });
+
+            carregarProdutos();
+        }
+
         carregarProdutos();
+
+        document.getElementById('buscar').addEventListener('input', carregarProdutos);
+        document.getElementById('filtro').addEventListener('change', carregarProdutos);
     </script>
 </body>
+
 </html>
