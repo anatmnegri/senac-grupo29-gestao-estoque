@@ -1,3 +1,14 @@
+##Integrantes do Grupo
+* Ana Teresa de Medeiros Negri Silva
+* Bruno Luan Oliveira de Carvalho
+* Davi Monteiro Bezerra
+* Heloísa Anselmo da Cunha
+* Henrique Oliveira Diniz
+* Michael Oliveira Pinto
+* Samuel Araújo dos Santos
+* Vitor Gongora Oliveira da Silva Pereira
+
+
 # Sistema de Gestão de Estoque - Grupo 29 (Senac)
 
 Este é o **Projeto Integrador** desenvolvido pelo Grupo 29 para o curso de Análise e Desenvolvimento de Sistemas do **Senac EAD**. O objetivo da aplicação é oferecer uma solução prática e eficiente para o controle de produtos e inventário em pequenas empresas.
@@ -40,12 +51,4 @@ Abra o terminal e execute os comandos abaixo:
 git clone https://github.com/anatmnegri/senac-grupo29-gestao-estoque.git
 cd senac-grupo29-gestao-estoque
 
-##Integrantes do Grupo
-* Ana Teresa de Medeiros Negri Silva
-* Bruno Luan Oliveira de Carvalho
-* Davi Monteiro Bezerra
-* Heloísa Anselmo da Cunha
-* Henrique Oliveira Diniz
-* Michael Oliveira Pinto
-* Samuel Araújo dos Santos
-* Vitor Gongora Oliveira da Silva Pereira
+
